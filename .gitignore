@@ -11,6 +11,10 @@
 
 demo/dist/
 
+tmpnodejsnpm-cache
+
+demo
+
 ### Node ###
 # Logs
 logs

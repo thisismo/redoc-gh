@@ -25,12 +25,14 @@ export class SearchStore<T> {
   indexItems(groups: Array<IMenuItem | OperationModel>) {
     const recurse = items => {
       items.forEach(group => {
-        if (group.type !== 'group') {
+        if (group.type !== 'group' && group.type !== 'operation') {
           this.add(group.name, group.description || '', group.id);
         }
         recurse(group.items);
       });
     };
+
+    console.log("grps:", groups);
 
     const fields = flattenByProps(groups as Array<any>,
       ['items', 'responses', 'parameters', 'content', 'requestBody', 'mediaTypes', 'schema', 'oneOf', 'fields'],
