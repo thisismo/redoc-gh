@@ -1,6 +1,13 @@
 import { action, observable } from 'mobx';
 import { querySelector } from '../utils/dom';
-import {MediaContentModel, ResponseModel, SchemaModel, SpecStore} from './models';
+import {
+  FieldModel,
+  GroupModel,
+  MediaContentModel, OperationModel,
+  ResponseModel,
+  SchemaModel,
+  SpecStore
+} from './models';
 
 import { history as historyInst, HistoryService } from './HistoryService';
 import { ScrollService } from './ScrollService';
@@ -135,20 +142,23 @@ export class MenuStore {
 
       if (isScrolledDown) {
         const el = this.getElementAtOrFirstChild(itemIdx + 1);
+        console.log("Scrolling down", this.isVisible(itemIdx), this.scroll.isElementBellow(el), this.flatItems[itemIdx]);
         //if(!this.isVisible(itemIdx + 1)) break;
         if (this.scroll.isElementBellow(el) && this.isVisible(itemIdx)) {
           break;
         }
       } else {
         const el = this.getElementAt(itemIdx);
-        if (this.scroll.isElementAbove(el) && this.isVisible(itemIdx - 1)) {
+        console.log("Scrolling up", this.isVisible(itemIdx), this.flatItems[itemIdx]);
+        if (this.scroll.isElementAbove(el) && this.isVisible(itemIdx)) {
           break;
         }
       }
+      console.log("Skipped", itemIdx, this.flatItems[itemIdx]);
       itemIdx += step;
     }
 
-    console.log("Activating by scroll", itemIdx, this.flatItems[itemIdx]);
+    console.log("Activated by scroll", itemIdx, this.flatItems[itemIdx]);
     this.activate(this.flatItems[itemIdx], true, true);
   };
 
@@ -187,19 +197,17 @@ export class MenuStore {
     while(item !== undefined) {
       //console.log("visibility loop", targetMimeIdx, item);
       if(item instanceof MediaContentModel && targetMimeIdx !== -1 && item.activeMimeIdx !== targetMimeIdx) {
+        console.log("Not visible due to media type", this.flatItems[idx]);
         visible = false;
         break;
       }
 
       if(item instanceof SchemaModel && targetOneOf !== -1 && item.activeOneOf !== targetOneOf) {
+        console.log("Not visible due to one Of", this.flatItems[idx]);
         visible = false;
         break;
       }
       //console.log("try cast", item as IMenuItem);
-      if((item as IMenuItem) != null && (item as IMenuItem).type === "field" && (item as IMenuItem).expanded !== true) {
-        visible = false;
-        break;
-      }
 
       if(item.targetOneOf !== undefined) {
         targetOneOf = item.targetOneOf;
@@ -210,6 +218,11 @@ export class MenuStore {
       }
 
       if(item instanceof ResponseModel && item.expanded !== true) {
+        visible = false;
+        break;
+      }
+
+      if(item instanceof FieldModel && item.expanded !== true) {
         visible = false;
         break;
       }
@@ -289,6 +302,37 @@ export class MenuStore {
       this.history.replace(item.id, rewriteHistory);
     }
 
+    if(item instanceof FieldModel) {
+      let parent: IIdentifiable | undefined = item.parent;
+      let targetOneOf: number = -1;
+      console.log("Trying to activate field", "item: ", item, " parent: ", parent);
+      while(parent !== undefined) {
+        if(parent instanceof ResponseModel || parent instanceof FieldModel) {
+          parent.expanded = true;
+        }
+
+        if(targetOneOf !== -1) {
+          (parent as SchemaModel).activateOneOf(targetOneOf);
+          targetOneOf = -1;
+        }
+
+        if(parent.targetOneOf !== undefined) {
+          targetOneOf = parent.targetOneOf;
+        }
+        parent = parent.parent;
+      }
+      //Second loop to activate corresponding tag in menu
+      parent = item.parent;
+      while(parent !== undefined) {
+        if(parent instanceof GroupModel || parent instanceof OperationModel) {
+          parent.activate();
+          parent.expand();
+          break;
+        }
+        parent = parent.parent;
+      }
+    }
+
     item.activate();
     item.expand();
   }
@@ -307,6 +351,7 @@ export class MenuStore {
     while (item !== undefined) {
       if(this.isLegitMenuItem(item)) {
         (item as IMenuItem).collapse();
+        (item as IMenuItem).deactivate();
       }
       item = item.parent;
     }
@@ -331,7 +376,15 @@ export class MenuStore {
     const menuItem = (item && this.getItemById(item.id)) || item;
     this.activate(menuItem, updateLocation, rewriteHistory);
     this.scrollToActive();
-    if (!menuItem || !menuItem.items.length) {
+
+    setTimeout(() => {
+      if(this.activeItemIdx === item?.absoluteIdx) {
+        this.scrollToActive();
+      }
+    }, 100);
+
+    console.log("Scroll to active", menuItem);
+    if (!menuItem || !menuItem.items || !menuItem.items.length) {
       this.closeSidebar();
     }
   }

@@ -341,7 +341,7 @@ export class SchemaModel implements IIdentifiable{
   targetOneOf?: number;
 
   getId(): string {
-    return this.parent?.getId() + (this.title && this.type !== "array" ? "/" + this.title.toLowerCase() : "");
+    return this.parent?.getId() + (this.targetOneOf !== undefined ? "/" + this.targetOneOf : ""); //(this.title && this.type !== "array" ? "/" + this.title.toLowerCase() : "");
   }
 }
 

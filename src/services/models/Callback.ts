@@ -7,6 +7,7 @@ import { OperationModel } from './Operation';
 import { RedocNormalizedOptions } from '../RedocNormalizedOptions';
 import {IMenuItem} from "../MenuStore";
 
+//TODO: Include callbacks in search & scroll
 export class CallbackModel /*implements IIdentifiable*/ {
   @observable
   expanded: boolean;

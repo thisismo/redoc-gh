@@ -1,4 +1,4 @@
-import { IS_BROWSER } from '../utils/';
+import {flattenByProps, IS_BROWSER} from '../utils/';
 import { IMenuItem } from './MenuStore';
 import { OperationModel } from './models';
 
@@ -31,6 +31,16 @@ export class SearchStore<T> {
         recurse(group.items);
       });
     };
+
+    const fields = flattenByProps(groups as Array<any>,
+      ['items', 'responses', 'parameters', 'content', 'requestBody', 'mediaTypes', 'schema', 'oneOf', 'fields'],
+      ['operation', 'field']);
+
+    //console.log("Fields", fields);
+
+    fields.forEach(field => {
+      this.add(field.name, field.description || '', field.id);
+    });
 
     recurse(groups);
     this.searchWorker.done();
