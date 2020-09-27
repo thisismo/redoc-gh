@@ -28,6 +28,6 @@ export class SpecStore {
     this.externalDocs = this.parser.spec.externalDocs;
     this.contentItems = MenuBuilder.buildStructure(this.parser, this.options);
     this.securitySchemes = new SecuritySchemesModel(this.parser);
-    this.webhooks = new WebhookModel(this.parser, options, this.parser.spec['x-webhooks']);
+    this.webhooks = new WebhookModel(this.parser, options, undefined, this.parser.spec['x-webhooks']);
   }
 }

@@ -45,7 +45,7 @@ export class SchemaDefinition extends React.PureComponent<ObjectDescriptionProps
         'json',
         false,
         SchemaDefinition.getMediaType(schemaRef, exampleRef),
-        options,
+        options
       );
     }
 

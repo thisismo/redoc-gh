@@ -52,7 +52,7 @@ export class OperationModel implements IMenuItem {
   description?: string;
   type = 'operation' as const;
 
-  parent?: GroupModel;
+  parent?: GroupModel | IMenuItem | undefined;
   externalDocs?: OpenAPIExternalDocumentation;
   items: ContentItemModel[] = [];
 
@@ -80,7 +80,7 @@ export class OperationModel implements IMenuItem {
   constructor(
     private parser: OpenAPIParser,
     private operationSpec: ExtendedOpenAPIOperation,
-    parent: GroupModel | undefined,
+    parent: GroupModel | IMenuItem | undefined,
     private options: RedocNormalizedOptions,
     isCallback: boolean = false,
   ) {
@@ -132,6 +132,10 @@ export class OperationModel implements IMenuItem {
     }
   }
 
+  getId(): string {
+    return this.id;
+  }
+
   /**
    * set operation as active (used by side menu)
    */
@@ -170,7 +174,7 @@ export class OperationModel implements IMenuItem {
   get requestBody() {
     return (
       this.operationSpec.requestBody &&
-      new RequestBodyModel(this.parser, this.operationSpec.requestBody, this.options)
+      new RequestBodyModel(this.parser, this.operationSpec.requestBody, this.options, this)
     );
   }
 
@@ -203,6 +207,7 @@ export class OperationModel implements IMenuItem {
     return samples;
   }
 
+  //TODO: Keep an eye on
   @memoize
   get parameters() {
     const _parameters = mergeParams(
@@ -210,7 +215,7 @@ export class OperationModel implements IMenuItem {
       this.operationSpec.pathParameters,
       this.operationSpec.parameters,
       // TODO: fix pointer
-    ).map((paramOrRef) => new FieldModel(this.parser, paramOrRef, this.pointer, this.options));
+    ).map((paramOrRef) => new FieldModel(this.parser, paramOrRef, this.pointer, this.options, this));
 
     if (this.options.sortPropsAlphabetically) {
       return sortByField(_parameters, 'name');
@@ -244,6 +249,7 @@ export class OperationModel implements IMenuItem {
           hasSuccessResponses,
           this.operationSpec.responses[code],
           this.options,
+          this
         );
       });
   }
@@ -257,6 +263,7 @@ export class OperationModel implements IMenuItem {
         this.operationSpec.callbacks![callbackEventName],
         this.pointer,
         this.options,
+        this
       );
     });
   }

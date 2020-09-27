@@ -24,6 +24,7 @@ describe('Components', () => {
           { $ref: '#/components/schemas/Pet' },
           '#/components/schemas/Pet',
           options,
+          false
         );
         const schemaViewElement = shallow(<Schema schema={schema} />).getElement();
         expect(schemaViewElement.type).toEqual(ObjectSchema);

@@ -58,6 +58,10 @@ export class GroupModel implements IMenuItem {
     }
   }
 
+  getId(): string {
+    return this.id;
+  }
+
   @action
   activate() {
     this.active = true;

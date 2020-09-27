@@ -20,6 +20,7 @@ describe('Components', () => {
         { $ref: '#/components/callbacks/Test' },
         '',
         options,
+        undefined
       );
       // There should be 1 operation defined in simple-callback.json, just get it manually for readability.
       const callbackViewElement = shallow(

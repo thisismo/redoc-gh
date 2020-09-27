@@ -7,8 +7,9 @@ import { OpenAPIParser } from '../OpenAPIParser';
 import { RedocNormalizedOptions } from '../RedocNormalizedOptions';
 import { FieldModel } from './Field';
 import { MediaContentModel } from './MediaContent';
+import {IIdentifiable} from "../MenuStore";
 
-export class ResponseModel {
+export class ResponseModel implements IIdentifiable{
   @observable
   expanded: boolean;
 
@@ -25,14 +26,19 @@ export class ResponseModel {
     defaultAsError: boolean,
     infoOrRef: Referenced<OpenAPIResponse>,
     options: RedocNormalizedOptions,
+    parent: IIdentifiable
   ) {
     this.expanded = options.expandResponses === 'all' || options.expandResponses[code];
 
     const info = parser.deref(infoOrRef);
     parser.exitRef(infoOrRef);
     this.code = code;
+
+    this.parent = parent;
+    this.id = this.getId();
+
     if (info.content !== undefined) {
-      this.content = new MediaContentModel(parser, info.content, false, options);
+      this.content = new MediaContentModel(parser, info.content, false, options, this);
     }
 
     if (info['x-summary'] !== undefined) {
@@ -49,9 +55,16 @@ export class ResponseModel {
     if (headers !== undefined) {
       this.headers = Object.keys(headers).map(name => {
         const header = headers[name];
-        return new FieldModel(parser, { ...header, name }, '', options);
+        return new FieldModel(parser, { ...header, name }, '', options, this);
       });
     }
+  }
+
+  id: string;
+  parent?: IIdentifiable;
+  targetOneOf?: number;
+  getId(): string {
+      return this.parent?.getId() + "/" + this.code.toString();
   }
 
   @action

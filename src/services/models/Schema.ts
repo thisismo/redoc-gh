@@ -6,7 +6,7 @@ import { OpenAPIParser } from '../OpenAPIParser';
 import { RedocNormalizedOptions } from '../RedocNormalizedOptions';
 import { FieldModel } from './Field';
 
-import { MergedOpenAPISchema } from '../';
+import {IIdentifiable, MergedOpenAPISchema} from '../';
 import {
   detectType,
   extractExtensions,
@@ -22,7 +22,7 @@ import {
 import { l } from '../Labels';
 
 // TODO: refactor this model, maybe use getters instead of copying all the values
-export class SchemaModel {
+export class SchemaModel implements IIdentifiable{
   pointer: string;
 
   type: string;
@@ -71,10 +71,19 @@ export class SchemaModel {
     pointer: string,
     private options: RedocNormalizedOptions,
     isChild: boolean = false,
+    parent?: IIdentifiable,
+    targetOneOf?: number,
+    targetMimeIdx?: number
   ) {
     this.pointer = schemaOrRef.$ref || pointer || '';
     this.rawSchema = parser.deref(schemaOrRef);
+
     this.schema = parser.mergeAllOf(this.rawSchema, this.pointer, isChild);
+
+    this.parent = parent;
+    this.targetOneOf = targetOneOf;
+    this.targetMimeIdx = targetMimeIdx;
+    this.id = this.getId();
 
     this.init(parser, isChild);
 
@@ -153,9 +162,9 @@ export class SchemaModel {
     }
 
     if (this.type === 'object') {
-      this.fields = buildFields(parser, schema, this.pointer, this.options);
+      this.fields = buildFields(parser, schema, this.pointer, this.options, this);
     } else if (this.type === 'array' && schema.items) {
-      this.items = new SchemaModel(parser, schema.items, this.pointer + '/items', this.options);
+      this.items = new SchemaModel(parser, schema.items, this.pointer + '/items', this.options, false, this);
       this.displayType = pluralizeType(this.items.displayType);
       this.displayFormat = this.items.format;
       this.typePrefix = this.items.typePrefix + l('arrayOf');
@@ -197,6 +206,9 @@ export class SchemaModel {
         } as OpenAPISchema,
         this.pointer + '/oneOf/' + idx,
         this.options,
+        false,
+        this,
+        idx
       );
 
       parser.exitRef(variant);
@@ -316,11 +328,20 @@ export class SchemaModel {
       });
     }
 
-    this.oneOf = refs.map(({ $ref, name }) => {
-      const innerSchema = new SchemaModel(parser, parser.byRef($ref)!, $ref, this.options, true);
+    this.oneOf = refs.map(({ $ref, name }, index) => {
+      const innerSchema = new SchemaModel(parser, parser.byRef($ref)!, $ref, this.options, true, this, index);
       innerSchema.title = name;
       return innerSchema;
     });
+  }
+
+  id: string;
+  parent?: IIdentifiable;
+  targetMimeIdx?: number;
+  targetOneOf?: number;
+
+  getId(): string {
+    return this.parent?.getId() + (this.title && this.type !== "array" ? "/" + this.title.toLowerCase() : "");
   }
 }
 
@@ -329,6 +350,7 @@ function buildFields(
   schema: OpenAPISchema,
   $ref: string,
   options: RedocNormalizedOptions,
+  ref: SchemaModel
 ): FieldModel[] {
   const props = schema.properties || {};
   const additionalProps = schema.additionalProperties;
@@ -358,6 +380,7 @@ function buildFields(
       },
       $ref + '/properties/' + fieldName,
       options,
+      ref
     );
   });
 
@@ -384,6 +407,7 @@ function buildFields(
         },
         $ref + '/additionalProperties',
         options,
+        ref
       ),
     );
   }

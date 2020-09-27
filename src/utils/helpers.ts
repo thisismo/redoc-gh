@@ -1,5 +1,6 @@
 import slugify from 'slugify';
 import { format, parse } from 'url';
+import {IMenuItem} from "../services";
 
 /**
  * Maps over array passing `isLast` bool to iterator as the second argument
@@ -52,6 +53,38 @@ export function flattenByProp<T extends object, P extends keyof T>(
       if (item[prop]) {
         iterate((item[prop] as any) as T[]);
       }
+    }
+  };
+  iterate(collectionItems);
+  return res;
+}
+
+/**
+ * flattens collection using `prop` field as a children
+ * @param collectionItems collection items
+ * @param prop item property with child elements
+ */
+export function flattenByProps<T extends IMenuItem, P extends keyof T>(
+  collectionItems: T[],
+  prop: P[],
+  type?: string[]
+): T[] {
+  const res: T[] = [];
+  const iterate = (items: T[]) => {
+    for (const item of items) {
+      if(item.type && type?.includes(item.type)) {
+        res.push(item);
+      } else if(type === undefined) {
+        res.push(item);
+      }
+      prop.forEach(p => {
+        if(!item[p]) return;
+        if(Array.isArray(item[p])) {
+          iterate((item[p] as any) as T[]);
+        } else if ((item[p] as any) instanceof Object) {
+          iterate(([item[p]] as any) as T[]);
+        }
+      })
     }
   };
   iterate(collectionItems);

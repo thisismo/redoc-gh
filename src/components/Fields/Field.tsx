@@ -16,6 +16,7 @@ import { ShelfIcon } from '../../common-elements/';
 
 import { FieldModel } from '../../services/models';
 import { Schema, SchemaOptions } from '../Schema/Schema';
+import {SECTION_ATTR} from "../../services";
 
 export interface FieldProps extends SchemaOptions {
   className?: string;
@@ -49,6 +50,7 @@ export class Field extends React.Component<FieldProps> {
     const { className, field, isLast, expandByDefault } = this.props;
     const { name, deprecated, required, kind } = field;
     const withSubSchema = !field.schema.isPrimitive && !field.schema.isCircular;
+    const attr_id = {[SECTION_ATTR]: this.props.field.getId()};
 
     const expanded = field.expanded === undefined ? expandByDefault : field.expanded;
 
@@ -81,7 +83,7 @@ export class Field extends React.Component<FieldProps> {
       <>
         <tr className={isLast ? 'last ' + className : className}>
           {paramName}
-          <PropertyDetailsCell>
+          <PropertyDetailsCell {...attr_id}>
             <FieldDetails {...this.props} />
           </PropertyDetailsCell>
         </tr>

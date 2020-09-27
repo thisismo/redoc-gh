@@ -42,14 +42,14 @@ export class ScrollService {
 
   isElementBellow(el: Element | null) {
     if (el === null) {
-      return;
+      return false;
     }
     return el.getBoundingClientRect().top > this.options.scrollYOffset();
   }
 
   isElementAbove(el: Element | null) {
     if (el === null) {
-      return;
+      return false;
     }
     const top = el.getBoundingClientRect().top;
     return (top > 0 ? Math.floor(top) : Math.ceil(top)) <= this.options.scrollYOffset();

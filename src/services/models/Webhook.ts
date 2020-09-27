@@ -1,7 +1,7 @@
 import { OpenAPIPath, Referenced } from '../../types';
 import { OpenAPIParser } from '../OpenAPIParser';
 import { OperationModel } from './Operation';
-import { isOperationName } from '../..';
+import {IMenuItem, isOperationName} from '../..';
 import { RedocNormalizedOptions } from '../RedocNormalizedOptions';
 
 export class WebhookModel {
@@ -10,7 +10,8 @@ export class WebhookModel {
   constructor(
     parser: OpenAPIParser,
     options: RedocNormalizedOptions,
-    infoOrRef?: Referenced<OpenAPIPath>,
+    parent?: IMenuItem,
+    infoOrRef?: Referenced<OpenAPIPath>
   ) {
     const webhooks = parser.deref<OpenAPIPath>(infoOrRef || {});
     parser.exitRef(infoOrRef);
@@ -26,7 +27,7 @@ export class WebhookModel {
             ...operationInfo,
             httpVerb: operationName,
           },
-          undefined,
+          parent,
           options,
           false,
         );

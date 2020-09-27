@@ -6,12 +6,13 @@ import { MediaTypeModel } from './MediaType';
 import { mergeSimilarMediaTypes } from '../../utils';
 import { OpenAPIParser } from '../OpenAPIParser';
 import { RedocNormalizedOptions } from '../RedocNormalizedOptions';
+import {IIdentifiable} from "../MenuStore";
 
 /**
  * MediaContent model ready to be sued by React components
  * Contains multiple MediaTypes and keeps track of the currently active one
  */
-export class MediaContentModel {
+export class MediaContentModel implements IIdentifiable {
   mediaTypes: MediaTypeModel[];
 
   @observable
@@ -25,15 +26,17 @@ export class MediaContentModel {
     info: Record<string, OpenAPIMediaType>,
     public isRequestType: boolean,
     options: RedocNormalizedOptions,
+    parent: IIdentifiable
   ) {
     if (options.unstable_ignoreMimeParameters) {
       info = mergeSimilarMediaTypes(info);
     }
-    this.mediaTypes = Object.keys(info).map(name => {
+    this.parent = parent;
+    this.mediaTypes = Object.keys(info).map((name, idx) => {
       const mime = info[name];
       // reset deref cache just in case something is left there
       parser.resetVisited();
-      return new MediaTypeModel(parser, name, isRequestType, mime, options);
+      return new MediaTypeModel(parser, name, isRequestType, mime, options, this, undefined, idx);
     });
   }
 
@@ -53,5 +56,15 @@ export class MediaContentModel {
 
   get hasSample(): boolean {
     return this.mediaTypes.filter(mime => !!mime.examples).length > 0;
+  }
+
+  id: string;
+  parent: IIdentifiable;
+  targetMimeIdx: number;
+  targetOneOf?: number;
+
+  //TODO: Might be buggy
+  getId(): string {
+    return this.parent.getId();
   }
 }

@@ -11,6 +11,7 @@ import { RedocNormalizedOptions } from '../RedocNormalizedOptions';
 import { extractExtensions } from '../../utils/openapi';
 import { OpenAPIParser } from '../OpenAPIParser';
 import { SchemaModel } from './Schema';
+import {IIdentifiable, IMenuItem} from "../MenuStore";
 
 const DEFAULT_SERIALIZATION: Record<
   OpenAPIParameterLocation,
@@ -37,9 +38,20 @@ const DEFAULT_SERIALIZATION: Record<
 /**
  * Field or Parameter model ready to be used by components
  */
-export class FieldModel {
+export class FieldModel implements IMenuItem {
   @observable
   expanded: boolean | undefined;
+
+  //Start customization
+  id: string;
+  active: boolean;
+  depth: number;
+  items: [];
+  type = 'field' as const;
+  parent: IIdentifiable;
+  targetOneOf: number;
+
+  //End customization
 
   schema: SchemaModel;
   name: string;
@@ -60,12 +72,17 @@ export class FieldModel {
     infoOrRef: Referenced<OpenAPIParameter> & { name?: string; kind?: string },
     pointer: string,
     options: RedocNormalizedOptions,
+    parent: IIdentifiable
   ) {
     const info = parser.deref<OpenAPIParameter>(infoOrRef);
     this.kind = infoOrRef.kind || 'field';
     this.name = infoOrRef.name || info.name;
     this.in = info.in;
     this.required = !!info.required;
+
+    this.parent = parent;
+    this.id = this.getId();
+    //console.log(this.getId());
 
     let fieldSchema = info.schema;
     let serializationMime = '';
@@ -74,7 +91,7 @@ export class FieldModel {
       fieldSchema = info.content[serializationMime] && info.content[serializationMime].schema;
     }
 
-    this.schema = new SchemaModel(parser, fieldSchema || {}, pointer, options);
+    this.schema = new SchemaModel(parser, fieldSchema || {}, pointer, options, false, this);
     this.description =
       info.description === undefined ? this.schema.description || '' : info.description;
     this.example = info.example || this.schema.example;
@@ -104,5 +121,27 @@ export class FieldModel {
   @action
   toggle() {
     this.expanded = !this.expanded;
+  }
+
+  getId(): string {
+    return this.parent?.getId() + "/" + this.name;
+  }
+
+  absoluteIdx: number;
+
+  activate(): void {
+    return;
+  }
+
+  collapse(): void {
+    return;
+  }
+
+  deactivate(): void {
+    return;
+  }
+
+  expand(): void {
+    return;
   }
 }

@@ -7,8 +7,9 @@ import { SchemaModel } from './Schema';
 import { isJsonLike, mapValues } from '../../utils';
 import { OpenAPIParser } from '../OpenAPIParser';
 import { ExampleModel } from './Example';
+import {IIdentifiable} from "../MenuStore";
 
-export class MediaTypeModel {
+export class MediaTypeModel implements IIdentifiable {
   examples?: { [name: string]: ExampleModel };
   schema?: SchemaModel;
   name: string;
@@ -24,11 +25,21 @@ export class MediaTypeModel {
     isRequestType: boolean,
     info: OpenAPIMediaType,
     options: RedocNormalizedOptions,
+    parent?: IIdentifiable,
+    targetOneOf?: number,
+    targetMimeIdx?: number
   ) {
     this.name = name;
     this.isRequestType = isRequestType;
-    this.schema = info.schema && new SchemaModel(parser, info.schema, '', options);
+
+    this.parent = parent;
+    this.id = this.getId();
+    this.targetMimeIdx = targetMimeIdx;
+    this.targetOneOf = targetOneOf;
+
+    this.schema = info.schema && new SchemaModel(parser, info.schema, '', options, false, this, undefined, targetMimeIdx);
     this.onlyRequiredInSamples = options.onlyRequiredInSamples;
+
     if (info.examples !== undefined) {
       this.examples = mapValues(
         info.examples,
@@ -46,6 +57,15 @@ export class MediaTypeModel {
     } else if (isJsonLike(name)) {
       this.generateExample(parser, info);
     }
+  }
+
+  id: string;
+  parent?: IIdentifiable;
+  targetOneOf?: number;
+  targetMimeIdx?: number;
+
+  getId(): string {
+    return this.parent?.getId() + "/" + this.name;
   }
 
   generateExample(parser: OpenAPIParser, info: OpenAPIMediaType) {
