@@ -97,12 +97,12 @@ export class MenuStore {
     //this.flatItems = flattenByProp(this.items || [], 'items');
 
     this.flatItems = flattenByProps(this.items as any[] || [],
-      ['items', 'parameters', 'content', 'requestBody', 'mediaTypes', 'schema', 'oneOf', 'fields', 'responses'],
+      ['items', 'parameters', 'headers', 'content', 'requestBody', 'mediaTypes', 'schema', 'oneOf', 'fields', 'responses'],
       ['operation', 'field', 'group', 'tag', 'section']);
 
     this.flatItems.forEach((item, idx) => (item.absoluteIdx = idx));
 
-    console.log(this.flatItems);
+    //console.log(this.flatItems);
 
     //this.flatItems.filter(item => item.absoluteIdx && item.absoluteIdx <= 40).forEach(item => console.log(item));
 
@@ -141,24 +141,28 @@ export class MenuStore {
       }
 
       if (isScrolledDown) {
-        const el = this.getElementAtOrFirstChild(itemIdx + 1);
-        console.log("Scrolling down", this.isVisible(itemIdx), this.scroll.isElementBellow(el), this.flatItems[itemIdx]);
-        //if(!this.isVisible(itemIdx + 1)) break;
+        let pointer = 1;
+        while(!this.isVisible(itemIdx + pointer)) {
+          pointer++;
+        }
+        const el = this.getElementAtOrFirstChild(itemIdx + pointer);
+        //console.log("Scrolling down", "current: ", this.flatItems[itemIdx], " visible: ", this.isVisible(itemIdx), " next: ", this.flatItems[itemIdx + 1], " isBelow: ", this.scroll.isElementBellow(el), el);
+        //if(!this.isVisible(itemIdx + 1)) break;s
         if (this.scroll.isElementBellow(el) && this.isVisible(itemIdx)) {
           break;
         }
       } else {
         const el = this.getElementAt(itemIdx);
-        console.log("Scrolling up", this.isVisible(itemIdx), this.flatItems[itemIdx]);
+        //console.log("Scrolling up", this.isVisible(itemIdx), this.flatItems[itemIdx]);
         if (this.scroll.isElementAbove(el) && this.isVisible(itemIdx)) {
           break;
         }
       }
-      console.log("Skipped", itemIdx, this.flatItems[itemIdx]);
+      //console.log("Skipped", itemIdx, this.flatItems[itemIdx]);
       itemIdx += step;
     }
 
-    console.log("Activated by scroll", itemIdx, this.flatItems[itemIdx]);
+    //console.log("Activated by scroll", itemIdx, this.flatItems[itemIdx]);
     this.activate(this.flatItems[itemIdx], true, true);
   };
 
@@ -197,13 +201,13 @@ export class MenuStore {
     while(item !== undefined) {
       //console.log("visibility loop", targetMimeIdx, item);
       if(item instanceof MediaContentModel && targetMimeIdx !== -1 && item.activeMimeIdx !== targetMimeIdx) {
-        console.log("Not visible due to media type", this.flatItems[idx]);
+        //console.log("Not visible due to media type", this.flatItems[idx]);
         visible = false;
         break;
       }
 
       if(item instanceof SchemaModel && targetOneOf !== -1 && item.activeOneOf !== targetOneOf) {
-        console.log("Not visible due to one Of", this.flatItems[idx]);
+        //console.log("Not visible due to one Of", this.flatItems[idx]);
         visible = false;
         break;
       }
@@ -229,7 +233,7 @@ export class MenuStore {
 
       item = item.parent;
     }
-    console.log("visibility check", idx, this.flatItems[idx], visible);
+    //console.log("visibility check", idx, this.flatItems[idx], visible);
     return visible;
   }
 
@@ -305,7 +309,7 @@ export class MenuStore {
     if(item instanceof FieldModel) {
       let parent: IIdentifiable | undefined = item.parent;
       let targetOneOf: number = -1;
-      console.log("Trying to activate field", "item: ", item, " parent: ", parent);
+      //console.log("Trying to activate field", "item: ", item, " parent: ", parent);
       while(parent !== undefined) {
         if(parent instanceof ResponseModel || parent instanceof FieldModel) {
           parent.expanded = true;
@@ -383,7 +387,7 @@ export class MenuStore {
       }
     }, 100);
 
-    console.log("Scroll to active", menuItem);
+    //console.log("Scroll to active", menuItem);
     if (!menuItem || !menuItem.items || !menuItem.items.length) {
       this.closeSidebar();
     }
